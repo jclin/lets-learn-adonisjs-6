@@ -1,25 +1,36 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
 import Movie from '#models/movie'
+import MovieStatus from '#models/movie_status'
+import MovieService from '#services/movie_service'
+import { movieFilterValidator } from '#validators/movie'
+import router from '@adonisjs/core/services/router'
 
 export default class MoviesController {
-  async index({ view, auth }: HttpContext) {
-    const comingSoon = await Movie.query()
-      .apply((scope) => scope.notReleased)
-      .preload('director')
-      .preload('writer')
-      .whereNotNull('releasedAt')
-      .orderBy('releasedAt')
-      .limit(3)
+  async index({ request, view, auth }: HttpContext) {
+    const page = request.input('page', 1)
+    const filters = await movieFilterValidator.validate(request.qs())
+    const movies = await MovieService.getFiltered(filters, auth.user).paginate(page, 15)
+    const movieStatuses = await MovieStatus.query().orderBy('name').select('id', 'name')
+    const movieSortOptions = MovieService.sortOptions
 
-    const recentlyReleased = await Movie.query()
-      .apply((scope) => scope.released())
-      .preload('director')
-      .preload('writer')
-      .orderBy('releasedAt', 'desc')
-      .limit(9)
+    movies.baseUrl(router.makeUrl('movies.index'))
+    movies.queryString(filters)
 
-    return view.render('pages/home', { comingSoon, recentlyReleased, auth })
+    const rangeMin = movies.currentPage - 3
+    const rangeMax = movies.currentPage + 3
+
+    let pagination = movies.getUrlsForRange(1, movies.lastPage).filter((item) => {
+      return item.page >= rangeMin && item.page <= rangeMax
+    })
+
+    return view.render('pages/movies/index', {
+      movies,
+      movieStatuses,
+      movieSortOptions,
+      filters: filters,
+      pagination,
+    })
   }
 
   async show({ view, params }: HttpContext) {
