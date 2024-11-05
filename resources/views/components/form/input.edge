@@ -5,9 +5,9 @@
   @if ($slots.label || label)
     <span class="text-xs font-bold">
       @if ($slots.label)
-        {{ await $slots.label() }}
+        {{{ await $slots.label() }}}
       @else
-        {{ label || '' }}
+        {{ label }}
       @endif
     </span>
   @endif
@@ -16,16 +16,17 @@
     <select name="{{ name || '' }}">
       {{{ await $slots.main() }}}
     </select>
+  @elseif (type === 'textarea')
+    <textarea name="{{ name || '' }}">{{ value || '' }}</textarea>
   @else
     <input type="{{ type || 'text' }}" name="{{ name || '' }}" value="{{ value || '' }}" />
   @endif
 
-
   @if (name)
     @inputError(name)
-    <p class="text-xs text-red-500">
-      {{ $messages.join(', ') }}
-    </p>
+      <p class="text-xs text-red-500">
+        {{ $messages.join(', ') }}
+      </p>
     @end
   @endif
 </label>

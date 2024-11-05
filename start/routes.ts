@@ -9,6 +9,9 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+
+const AvatarsController = () => import('#controllers/avatars_controller')
+const ProfilesController = () => import('#controllers/profiles_controller')
 const WatchlistsController = () => import('#controllers/watchlists_controller')
 
 const HomeController = () => import('#controllers/home_controller')
@@ -22,6 +25,8 @@ const RegisterController = () => import('#controllers/auth/register_controller')
 const WritersController = () => import('#controllers/writers_controller')
 
 router.get('/', [HomeController, 'index']).as('home')
+
+router.get('/avatars/:filename', [AvatarsController, 'show']).as('avatars.show')
 
 router.get('/movies', [MoviesController, 'index']).as('movies.index')
 
@@ -49,6 +54,10 @@ router.get('/writers/:id', [WritersController, 'show']).as('writers.show')
 
 router.delete('/redis/flush', [RedisController, 'flush']).as('redis.flush')
 router.delete('/redis/:slug', [RedisController, 'destroy']).as('redis.destroy')
+
+router.get('/profile/edit', [ProfilesController, 'edit']).as('profiles.edit').use(middleware.auth())
+router.put('/profiles', [ProfilesController, 'update']).as('profiles.update').use(middleware.auth())
+router.get('/profiles/:id', [ProfilesController, 'show']).as('profiles.show')
 
 router
   .group(() => {
